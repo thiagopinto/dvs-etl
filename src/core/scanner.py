@@ -1,5 +1,6 @@
 import os
 import glob
+from typing import Optional
 from src.interfaces.scanner import IFileScanner
 
 class FileScanner(IFileScanner):
@@ -10,7 +11,7 @@ class FileScanner(IFileScanner):
     def __init__(self, directory: str):
         self.directory = directory
 
-    def get_latest_file(self, prefix: str, extension: str = ".dbf") -> str | None:
+    def get_latest_file(self, prefix: str, extension: str = ".dbf") -> Optional[str]:
         pattern = os.path.join(self.directory, f"{prefix}*{extension}")
         files = glob.glob(pattern)
         

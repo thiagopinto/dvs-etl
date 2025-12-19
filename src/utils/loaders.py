@@ -17,17 +17,31 @@ class FileLoader:
 
     @staticmethod
     def load_dbf(file_path: str) -> pd.DataFrame:
+        from tqdm import tqdm
         try:
-            # Tenta ler com a codificação padrão do DBF (geralmente 'latin-1' ou 'cp1252')
-            # O 'encoding' pode ser necessário para caracteres especiais/acentuados.
-            # dbfread tentará inferir, mas podemos forçar para compatibilidade.
-            table = DBF(file_path, load=True, encoding='latin-1')
-            return pd.DataFrame(iter(table))
-        except Exception as e:
-            # Se latin-1 falhar, podemos tentar outra comum como 'cp1252'
+            # Primeiro, abrimos sem carregar para contar registros (rápido em dbfread)
+            # Tenta com latin-1
+            encoding = 'latin-1'
             try:
-                table = DBF(file_path, load=True, encoding='cp1252')
-                return pd.DataFrame(iter(table))
-            except Exception as e2:
-                # Se ambas falharem, reporta o erro original
-                raise Exception(f"Erro de I/O DBF: {e} (tentativa latin-1), {e2} (tentativa cp1252)")
+                 table = DBF(file_path, load=False, encoding=encoding)
+            except:
+                 encoding = 'cp1252'
+                 table = DBF(file_path, load=False, encoding=encoding)
+
+            record_count = len(table)
+            print(f" -> Lendo {record_count} registros do arquivo DBF...")
+
+            # Agora iteramos com barra de progresso
+            data = []
+            # Recriamos o objeto DBF para iterar do zero
+            table_iter = DBF(file_path, load=False, encoding=encoding)
+            
+            with tqdm(total=record_count, unit="rows", desc=f"Lendo {os.path.basename(file_path)}") as pbar:
+                for record in table_iter:
+                    data.append(record)
+                    pbar.update(1)
+            
+            return pd.DataFrame(data)
+
+        except Exception as e:
+            raise Exception(f"Erro de I/O DBF: {e}")

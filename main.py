@@ -5,6 +5,7 @@ from config import Config
 from src.core.scanner import FileScanner
 from src.core.factory import SourceFactory
 from src.utils.loaders import FileLoader # Usado apenas para leitura genérica manual
+from src.utils.database import Database # Novo import
 
 def process_source(file_path, prefix_or_label):
     """
@@ -22,6 +23,12 @@ def process_source(file_path, prefix_or_label):
         if not df.empty:
             print("Preview:")
             print(df.head(3))
+
+            # Carregar dados no banco de dados se for Dengue
+            if source.get_name() == "Notificações de Dengue (SINAN)":
+                Database.upsert_dataframe(df, "dengue_completo", pk_columns=["ID_AGRAVO", "NU_NOTIFIC", "NU_ANO"])
+            elif source.get_name() == "Notificações de Chikungunya (SINAN)":
+                Database.upsert_dataframe(df, "chik_completo", pk_columns=["ID_AGRAVO", "NU_NOTIFIC", "NU_ANO"])
 
     except ValueError:
         # Se não achou fonte específica na Factory, cai aqui (modo manual genérico)
@@ -49,6 +56,12 @@ def run_auto_mode():
     targets = ['DENGON', 'CHIKON']
     
     print(f"Iniciando varredura em: {Config.DATA_INPUT_DIR}")
+
+    # Verifica se o diretório de entrada está vazio
+    if not os.listdir(Config.DATA_INPUT_DIR):
+        print(f"\nAviso: O diretório de entrada '{Config.DATA_INPUT_DIR}' está vazio.")
+        print("Por favor, coloque os arquivos .dbf ou .csv a serem processados aqui.")
+        return # Sai da função se o diretório estiver vazio
     
     found_any = False
     for prefix in targets:

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 
 class IFileScanner(ABC):
     """
@@ -6,7 +7,7 @@ class IFileScanner(ABC):
     """
 
     @abstractmethod
-    def get_latest_file(self, prefix: str, extension: str) -> str | None:
+    def get_latest_file(self, prefix: str, extension: str) -> Optional[str]:
         """
         Busca o arquivo mais recente com base no critério.
         """
